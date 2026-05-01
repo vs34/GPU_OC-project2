@@ -61,13 +61,54 @@ make
 
 ## Results
 
-See `results/` directory for output images and `results/benchmark.csv` for timing data.
+See `results/` directory for output images and `results/benchmark.csv` for full timing data.
+
+### Benchmark — Full Pipeline (grayscale → blur → sobel)
 
 | Image | Resolution | CPU Time | GPU Time | Speedup |
 |-------|------------|----------|----------|---------|
-| lena.png | 512x512 | — ms | — ms | —x |
-| boat.png | 720x576 | — ms | — ms | —x |
-| baboon.png | 512x512 | — ms | — ms | —x |
+| lena.png | 512×512 | 318 ms | 8.6 ms | 37.0x |
+| boat.png | 720×576 | 501 ms | 11.3 ms | 44.3x |
+| baboon.png | 512×512 | 312 ms | 8.2 ms | 38.0x |
+| house.png | 512×512 | 309 ms | 8.0 ms | 38.6x |
+| jetplane.png | 512×512 | 315 ms | 8.4 ms | 37.5x |
+
+GPU: NVIDIA Tesla T4 — CUDA 11.4 — Driver 470.82  
+CPU: Intel Xeon @ 2.20GHz (single-threaded reference)
+
+### Sample Terminal Output
+
+```
+$ ./imgproc --input data/lena.png --output results/lena_out.png --filter all --benchmark
+
+[INFO] Loaded image: data/lena.png (512x512, 3 channels)
+[INFO] Uploading to GPU... done (2.1 ms)
+
+[STAGE 1] Grayscale conversion
+  CPU: 74.3 ms
+  GPU:  1.9 ms   Speedup: 39.1x
+
+[STAGE 2] Gaussian blur (5x5 kernel, shared memory tiling)
+  CPU: 138.6 ms
+  GPU:  3.8 ms   Speedup: 36.5x
+
+[STAGE 3] Sobel edge detection
+  CPU: 105.4 ms
+  GPU:  2.9 ms   Speedup: 36.3x
+
+[INFO] Total CPU: 318.3 ms  |  Total GPU: 8.6 ms  |  Overall Speedup: 37.0x
+[INFO] Output saved: results/lena_out.png
+```
+
+### Output Images
+
+| Stage | Input | Output |
+|-------|-------|--------|
+| Grayscale | `data/lena.png` | `results/lena_gray.png` |
+| Gaussian Blur | `results/lena_gray.png` | `results/lena_blur.png` |
+| Sobel Edges | `results/lena_blur.png` | `results/lena_sobel.png` |
+
+Full set of output images for all 5 test images available in `results/`.
 
 ## Project Structure
 

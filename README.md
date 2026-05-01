@@ -1,100 +1,116 @@
-# GPU Specialization Capstone Project
-
-## Project Title
-
-<!-- Replace with your project title -->
+# GPU Image Processing Pipeline
 
 ## Description
 
-<!-- 2-3 sentences: what does this project do, why is it interesting, what GPU technique does it demonstrate? -->
+A CUDA-accelerated image processing pipeline that applies a chain of filters — grayscale conversion, Gaussian blur, and Sobel edge detection — to images using custom GPU kernels. The project demonstrates parallel 2D convolution on the GPU and benchmarks it against an equivalent CPU implementation, showing real-world speedup on image data.
 
 ## GPU Technology Used
 
-<!-- e.g., CUDA kernels, cuFFT, cuBLAS, NPP, PyTorch, TensorFlow, PyCUDA, etc. -->
+- Custom CUDA C++ kernels for 2D convolution, grayscale, and edge detection
+- CUDA thread/block grid optimized for 2D image data
+- OpenCV for image I/O (reading/writing only — all processing done on GPU)
 
 ## Requirements
 
 ### Hardware
-- NVIDIA GPU with CUDA support (or other GPU — see note below)
+- NVIDIA GPU with CUDA Compute Capability 3.5+
 
 ### Software
-- CUDA Toolkit X.X
-- <!-- Add other dependencies, e.g.: Python 3.x, PyTorch, OpenCV, etc. -->
+- CUDA Toolkit 11.0+
+- OpenCV 4.x
+- GCC 9+
+- Make
 
 ```bash
-# Install dependencies (example)
-pip install -r requirements.txt
-# or
-sudo apt-get install cuda-toolkit-XX-X
+# Ubuntu/Debian
+sudo apt-get install libopencv-dev
+sudo apt-get install cuda-toolkit-11-0
 ```
 
 ## Build
 
 ```bash
 make
-# or
-./run.sh
 ```
 
 ## Usage
 
 ```bash
-./program --input <input_file> --output <output_file> [options]
+./imgproc --input <image_path> --filter <filter_name> --output <output_path>
 ```
 
 | Argument | Description | Default |
 |----------|-------------|---------|
-| `--input` | Path to input file | required |
-| `--output` | Path to output file | `output/` |
-| | | |
+| `--input` | Path to input image (JPG/PNG) | required |
+| `--output` | Path to output image | `results/out.png` |
+| `--filter` | Filter to apply: `grayscale`, `blur`, `sobel`, `all` | `all` |
+| `--benchmark` | Print CPU vs GPU timing | false |
 
 ## Examples
 
 ```bash
-# Example 1
-./program --input data/sample.png --output results/out.png
+# Apply full pipeline (grayscale → blur → edge detection)
+./imgproc --input data/lena.png --output results/lena_out.png --filter all
 
-# Example 2
-./program --input data/large_dataset/ --output results/ --verbose
+# Sobel edge detection only with benchmark
+./imgproc --input data/boat.png --output results/boat_edges.png --filter sobel --benchmark
+
+# Batch run on all images in data/
+./run.sh
 ```
 
 ## Results
 
-<!-- Include summary of results, speedup vs CPU, accuracy metrics, etc. -->
+See `results/` directory for output images and `results/benchmark.csv` for timing data.
 
-See `results/` directory for output artifacts (images, logs, CSVs).
-
-| Dataset | CPU Time | GPU Time | Speedup |
-|---------|----------|----------|---------|
-| | | | |
+| Image | Resolution | CPU Time | GPU Time | Speedup |
+|-------|------------|----------|----------|---------|
+| lena.png | 512x512 | — ms | — ms | —x |
+| boat.png | 720x576 | — ms | — ms | —x |
+| baboon.png | 512x512 | — ms | — ms | —x |
 
 ## Project Structure
 
 ```
 .
-├── src/            # Source code
-├── data/           # Input datasets
-├── results/        # Output artifacts (proof of execution)
+├── src/
+│   ├── main.cu          # Entry point, CLI parsing
+│   ├── kernels.cu       # CUDA kernels (grayscale, blur, sobel)
+│   ├── kernels.h
+│   ├── pipeline.cu      # Pipeline orchestration
+│   └── cpu_ref.cpp      # CPU reference implementation for benchmarking
+├── data/                # Input images (from USC SIPI dataset)
+├── results/             # Output images + benchmark.csv
 ├── Makefile
-├── run.sh
+├── run.sh               # Batch runner for all images
 └── README.md
 ```
 
 ## Algorithms / Kernels
 
-<!-- Describe the key GPU kernels or framework operations used and why -->
+**Grayscale conversion:** Each CUDA thread converts one pixel using the luminance formula `Y = 0.299R + 0.587G + 0.114B`. Fully parallel — no data dependencies between pixels.
+
+**Gaussian blur:** 2D separable convolution with a 5x5 Gaussian kernel. Implemented as two 1D passes (horizontal then vertical) using shared memory tiling to minimize global memory reads.
+
+**Sobel edge detection:** Applies 3x3 Sobel kernels in X and Y directions, then computes gradient magnitude `sqrt(Gx² + Gy²)` per pixel. Highlights edges by measuring intensity gradients.
+
+All kernels launch with a 2D grid of 16x16 thread blocks, matching the 2D structure of image data.
 
 ## Lessons Learned
 
-<!-- What challenges did you face? What did you learn? What would you do differently? -->
+<!-- Fill in after completing the project -->
+- What surprised you about GPU memory management?
+- What was the most challenging kernel to tune?
+- How did shared memory affect performance?
+- What would you do next (e.g., video processing, real-time webcam)?
 
 ## Presentation
 
-<!-- Link to your 5-10 minute demo video -->
 Video: [YouTube / Box / Drive link]
 
 ## References
 
 - [CUDA Programming Guide](https://docs.nvidia.com/cuda/)
 - [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
+- [USC SIPI Image Database](https://sipi.usc.edu/database/database.php)
 - Course template: https://github.com/PascaleCourseraCourses/CUDAatScaleForTheEnterpriseCourseProjectTemplate
